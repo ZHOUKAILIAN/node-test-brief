@@ -1,0 +1,66 @@
+# 技术设计
+
+## 当前状态与来源
+
+设计已由用户授权抽取，代码尚待实现和验证。来源为 `ZHOUKAILIAN/my-pi-extension` PR #26 的 Node 测试精简脚本；原功能已完成真实 Node 回归与独立代码评审。新 SDK 的接口、取消和安装行为不能直接继承原验证结论。
+
+产品与 API 契约的唯一入口为 [README](../README.md)。本文件拥有模块实现、验证策略和已知边界；不复制 API 参数定义。
+
+## 执行链路
+
+```text
+CLI / 项目适配层                 JavaScript 调用方
+  解析参数、接进程信号                 |
+             └────── runTests(options) ─┘
+                      |
+            明确文件 / glob 展开、受控 Node 参数
+                      |
+            同一个 Node 子进程 + reporter
+             ├─ JSONL 事件与原始输出落盘
+             └─ 退出 / AbortSignal / timeout / I/O 错误
+                      |
+            校验终态、文件级与全局统计
+                      |
+              可选 Git 快照检查
+                      |
+            返回结构化结果和有界 summary
+```
+
+## 模块责任
+
+| 模块 | 责任 |
+| --- | --- |
+| `src/runner.mjs` | 保留已验证报告校验与日志/进程清理，实现无终端/进程监听副作用的 `runTests`；Git 检查仅显式启用。 |
+| `src/command.mjs` | 通用文件路径/glob 展开与 Node 命令组装；不识别任何项目固定脚本、目录或生命周期 hook。 |
+| `src/reporter.mjs` | Node 自定义异步 reporter，原始测试 stdout/stderr 落盘与安全 JSONL 事件输出。 |
+| `src/cli.mjs`、`bin/node-test-brief.mjs` | CLI 参数、摘要输出、退出码、信号控制；嵌入 CLI 的项目可传自己的完整文件范围。 |
+| `index.d.ts` | 公开 SDK / CLI 的 TypeScript 接口。 |
+| `test/` | 原核心回归迁移，以及 SDK、CLI、安装包和项目适配所需的新回归。 |
+
+只使用 Node 标准库，包不依赖 Pi、测试框架插件或某个项目的工作区。reporter 作为实际包文件分发，以 import.meta URL 定位，不能依赖源码仓库相对位置或安装时构建。
+
+## 取消、错误和日志
+
+SDK 使用 AbortSignal，不安装 SIGINT/SIGTERM 监听器。CLI 自己注册并在结束时移除监听器，以 SIGINT/SIGTERM 作为取消原因。已取消的 signal 不启动测试；后续取消只清理该调用的子进程组，不误伤并发调用。
+
+复用原有真实退出码、超时 124、SIGINT 130、SIGTERM 143、启动与日志错误处理。日志故障使结果失败并等待活跃进程组清理。SDK 返回的 summary 必须与 CLI 真正输出相同地有界，不能只裁剪 stdout 而向 API 返回无限全文。
+
+输出日志目录为每次运行独立临时目录，目录 0700、文件 0600。原始文本不裁剪；非 JSON 值的归一化有显式标记。日志不会被自动上传或进入 Git。POSIX 验证进程组清理；Windows 仅直接子进程行为，不声称完整后代清理。
+
+## 项目接入
+
+`my-pi-extension` 的测试文件发现与 npm hook 策略仍由项目的 `scripts/test-suite.mjs` 拥有。其 `scripts/test-agent.mjs` 成为薄适配：取得完整文件范围，调用 SDK CLI 并显式设置 `snapshot: 'git'`。不再保留本地 reporter、解析器、日志和取消实现。
+
+SDK 核心测试迁移到 SDK 仓库；消费项目保留必要的安装/调用、文件范围、附加文件、hook 拒绝及严格快照集成验证。原 `npm test` 保留完整输出。
+
+消费依赖为本仓库不可变 commit 的 GitHub archive URL，并保留 lockfile；不使用相对/绝对本机路径，不发布 npm。新 SDK 仓库实现与消费项目接入各自保持独立分支/PR，不合并或回退原来的异步压缩工作区。
+
+## 验证与效果对照
+
+1. 从原仓库同一基准保留未修改的对照工作区。比较时测试文件、Node、依赖及工作区一致，唯一变量是外层使用原脚本还是 SDK。
+2. 原逻辑与 SDK 对该同一份完整测试清单各运行一次，比较通过/失败/跳过/取消/TODO/suite 计数及实际退出状态；工作区/日志路径/时间允许自然不同。核对原始输出完整性及摘要预算。
+3. 小型真实 Node fixture 对照通过、断言失败、skip/TODO、取消/hook、timeout、I/O 故障、未知/损坏报告和前后快照变化，不用只看全量绿灯代替边界覆盖。
+4. SDK 不依赖 Git 的默认成功、Git 严格模式失败、SDK 不打印/不改全局监听器、并发调用独立取消都要验证。
+5. `npm pack` 到私有临时目录，在仓库外安装后测试 ESM API、CLI/bin、reporter 资产和类型声明；检查包内容无凭据、机器路径、运行日志或 session。
+6. 消费项目独立运行接入后的完整测试与 typecheck；测试总数变动必须说明是核心测试移至 SDK、集成测试新增，不能把减少数当成收益。
+7. 实现后进行独立代码评审。真实比较完成前，不声称 SDK 与原逻辑效果相同或已跨平台验证。
