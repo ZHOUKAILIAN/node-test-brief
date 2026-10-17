@@ -19,6 +19,7 @@
 ```js
 import { runTests } from 'node-test-brief';
 
+const controller = new AbortController();
 const result = await runTests({
   cwd: process.cwd(),
   files: ['test/example.test.js'],
