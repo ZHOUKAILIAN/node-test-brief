@@ -2,7 +2,9 @@
 
 ## 当前状态与来源
 
-实现来源为 `ZHOUKAILIAN/my-pi-extension` PR #26 的 Node 测试精简脚本。SDK 核心回归、无 Git API、独立取消、CLI、仓库外 npm pack 安装及类型声明已完成当前 macOS / Node 24.15.0 验证。固定 commit archive 消费安装和同清单全量效果对照正在验证；其结论不继承原脚本结果。GitHub CI 配置了 Linux/macOS，尚不以配置存在代替平台已验收。
+实现来源为 `ZHOUKAILIAN/my-pi-extension` PR #26 的 Node 测试精简脚本。首版代码 `b37e566573743243458bba033fca2b127df1cee6` 已通过独立代码评审及 26 项核心/API/CLI 回归；[Linux/macOS CI](https://github.com/ZHOUKAILIAN/node-test-brief/actions/runs/39083976910) 在 Node 24.15.0 实际通过。仓库外 npm pack 与固定 GitHub archive 均已真实安装验证 ESM API、CLI、reporter 和类型声明；消费项目冷安装核对了 lockfile 来源、非 symlink 安装及源码哈希。
+
+效果对照使用原项目固定基准 `76f9ce50f9e0b305ffd0f6946018edb1dcc29a19` 的同一工作区、Node、依赖及 60 文件清单：原脚本与已安装固定 archive 的 SDK 均为 866/866，通过/失败/跳过/取消/TODO/suite 计数及退出码一致。SDK 源码哈希与工作区快照前后一致。此结论是实际对照，不是仅凭抽取前绿灯继承；不表示执行耗时下降，也不替代消费适配层自身的集成验收。
 
 产品与 API 契约的唯一入口为 [README](../README.md)。本文件拥有模块实现、验证策略和已知边界；不复制 API 参数定义。
 
@@ -43,7 +45,7 @@ CLI / 项目适配层                 JavaScript 调用方
 
 SDK 使用 AbortSignal，不安装 SIGINT/SIGTERM 监听器。CLI 自己注册并在结束时移除监听器，以 SIGINT/SIGTERM 作为取消原因。已取消的 signal 不启动测试；后续取消只清理该调用的子进程组，不误伤并发调用。
 
-复用原有真实退出码、超时 124、SIGINT 130、SIGTERM 143、启动与日志错误处理。日志故障使结果失败并等待活跃进程组清理。SDK 返回的 summary 必须与 CLI 真正输出相同地有界，不能只裁剪 stdout 而向 API 返回无限全文。
+复用原有真实退出码、超时 124、SIGINT 130、SIGTERM 143、启动与日志错误处理。日志故障使结果失败并等待活跃进程组清理。SDK 返回的 summary 必须与 CLI 真正输出相同地有界，不能只裁剪 stdout 而向 API 返回无限全文。启动、流日志与最终元数据写故障置于优先区域，测试失败详情再按最终后缀的真实长度截断；次要元数据故障不能覆盖超时/取消的规定退出码。
 
 输出日志目录为每次运行独立临时目录，目录 0700、文件 0600。原始文本不裁剪；非 JSON 值的归一化有显式标记。日志不会被自动上传或进入 Git。POSIX 验证进程组清理；Windows 仅直接子进程行为，不声称完整后代清理。
 

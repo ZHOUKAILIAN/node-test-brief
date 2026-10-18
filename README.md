@@ -54,6 +54,13 @@ node-test-brief --snapshot git --node-arg=--experimental-strip-types test/*.test
 
 首版通过本仓库的固定 Git commit archive 或 `npm pack` 产物安装；尚未发布 npm，不使用未存在的 registry 安装命令。消费者锁定不可变 commit 与 lockfile，不用机器专属绝对路径作为最终依赖。
 
+安装已验证的固定版本：
+
+```sh
+npm install --save-dev https://github.com/ZHOUKAILIAN/node-test-brief/archive/b37e566573743243458bba033fca2b127df1cee6.tar.gz
+npx --no-install node-test-brief 'test/**/*.test.js'
+```
+
 源码验证命令和打包验证见 [技术设计](docs/design.md)。包以原生 ESM、CLI 和类型声明分发，不依赖 prepare/postinstall 下载或构建。
 
 ## 许可
