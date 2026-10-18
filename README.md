@@ -4,6 +4,20 @@
 
 提供独立的 JavaScript SDK、CLI 和类型声明；通过 GitHub 固定 commit archive 或本地 npm pack 安装，尚未发布 npm。实现机制与验证边界由 [技术设计](docs/design.md) 维护。
 
+## 实测收益：我们自己的项目
+
+以我们自己的 [my-pi-extension](https://github.com/ZHOUKAILIAN/my-pi-extension/tree/76f9ce50f9e0b305ffd0f6946018edb1dcc29a19) 为例：Node 24.15.0，同一轮完整执行 **60 个文件、17 个 suite、866/866 通过**，没有通过少跑测试缩减输出。
+
+| 交给 Agent 的文本 | UTF-8 字节数 | 行数 |
+| --- | ---: | ---: |
+| Node 原生 `spec` 详细展示（同一事件报告回放） | 85,340 | 912 |
+| SDK 实际返回的 `result.summary` | **512** | **5** |
+| 减少比例 | **99.40%** | **99.45%** |
+
+收益是少把成功用例的逐条输出塞进模型上下文：Agent 先看结果、计数和日志位置，失败时再按需查看详情；完整测试与原始日志仍然保留。
+
+测量使用同一次已保存的全通过记录，将事件报告交给 Node 原生 `spec` reporter 回放，与 SDK 实际摘要比较；没有重新执行测试，两边均不含 npm 启动行和终端颜色。**这是输出量收益，不代表模型 token、总费用或执行耗时同比下降，也不保证每轮都减少 99.40%。** 失败场景需要返回诊断，输出量会不同。具体口径见[技术设计](docs/design.md#输出量测量口径)。
+
 ## 使用契约
 
 - 仅支持 Node 原生 `node:test`，不解析任意 `npm test` 命令，也不假定兼容 Jest/Vitest/Mocha。
