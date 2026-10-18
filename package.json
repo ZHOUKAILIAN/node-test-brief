@@ -1,0 +1,19 @@
+{
+  "name": "node-test-brief",
+  "version": "0.1.0",
+  "description": "Agent-friendly Node test execution: concise results, complete local logs.",
+  "type": "module",
+  "private": true,
+  "license": "UNLICENSED",
+  "engines": { "node": ">=24.15.0 <25" },
+  "exports": {
+    ".": { "types": "./index.d.ts", "import": "./src/index.mjs" },
+    "./cli": { "types": "./cli.d.ts", "import": "./src/cli.mjs" },
+    "./package.json": "./package.json"
+  },
+  "types": "./index.d.ts",
+  "bin": { "node-test-brief": "./bin/node-test-brief.mjs" },
+  "files": ["src/", "bin/", "index.d.ts", "cli.d.ts", "README.md", "docs/"],
+  "scripts": { "test": "node --test test/*.test.mjs", "check": "node --check src/runner.mjs && node --check src/reporter.mjs && node --check src/command.mjs && node --check src/cli.mjs" },
+  "repository": { "type": "git", "url": "https://github.com/ZHOUKAILIAN/node-test-brief.git" }
+}

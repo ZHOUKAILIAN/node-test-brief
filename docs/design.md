@@ -2,7 +2,7 @@
 
 ## 当前状态与来源
 
-设计已由用户授权抽取，代码尚待实现和验证。来源为 `ZHOUKAILIAN/my-pi-extension` PR #26 的 Node 测试精简脚本；原功能已完成真实 Node 回归与独立代码评审。新 SDK 的接口、取消和安装行为不能直接继承原验证结论。
+实现来源为 `ZHOUKAILIAN/my-pi-extension` PR #26 的 Node 测试精简脚本。SDK 核心回归、无 Git API、独立取消、CLI、仓库外 npm pack 安装及类型声明已完成当前 macOS / Node 24.15.0 验证。固定 commit archive 消费安装和同清单全量效果对照正在验证；其结论不继承原脚本结果。GitHub CI 配置了 Linux/macOS，尚不以配置存在代替平台已验收。
 
 产品与 API 契约的唯一入口为 [README](../README.md)。本文件拥有模块实现、验证策略和已知边界；不复制 API 参数定义。
 

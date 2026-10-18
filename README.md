@@ -2,7 +2,7 @@
 
 面向 AI Coding Agent 的 Node 原生测试执行与结果精简 SDK。测试完整执行、原始输出本地保存，只把有界摘要交给 Agent；不调用模型总结日志。
 
-当前为 SDK 抽取设计，尚未完成实现或发布 npm。实现进度与验证边界由 [技术设计](docs/design.md) 维护。
+提供独立的 JavaScript SDK、CLI 和类型声明；通过 GitHub 固定 commit archive 或本地 npm pack 安装，尚未发布 npm。实现机制与验证边界由 [技术设计](docs/design.md) 维护。
 
 ## 使用契约
 
@@ -33,7 +33,7 @@ process.exitCode = result.exitCode;
 
 `runTests()` 不打印到终端、不安装进程级信号监听器，返回 Promise。调用者通过自己的 AbortSignal 取消，多个调用可以独立运行。参数错误在启动子进程之前抛出；已启动的运行以结果报告成功/失败，并完成必要清理。
 
-主要选项：`cwd`、`files`、`nodeArgs`、`timeoutMs`、`signal`、`snapshot`。`files` 支持相对路径、绝对路径和文件模式；无匹配文件不是成功。`nodeArgs` 放在测试文件之前，不允许覆盖 SDK 管理的 reporter、destination、测试模式或启用 watch。需要 TypeScript 的项目自行传入 Node 参数，例如 `['--experimental-strip-types']`。
+主要选项：`cwd`、`files`、`nodeArgs`、`timeoutMs`、`signal`、`snapshot`。`files` 支持相对路径、绝对路径和文件模式；无匹配文件不是成功。`nodeArgs` 放在测试文件之前，首版仅接受 `--experimental-strip-types`、`--enable-source-maps`、`--test-concurrency=<正整数>`、`--max-old-space-size=<正整数>`。筛选、分片、force-exit、watch 和其他未知模式均明确拒绝；非空 `NODE_OPTIONS` 也会被拒绝，避免环境隐式改变测试范围或清理行为。需要 TypeScript 的项目传入 `['--experimental-strip-types']`。
 
 主要结果：`ok`、`exitCode`、`report`（适用时的测试/通过/失败/跳过/取消/TODO/suite 计数）、`summary`、`logsDir`、`command`、`before`、`ended`。结果摘要由程序生成，不由模型生成。
 
